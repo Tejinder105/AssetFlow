@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import { errorHandler } from "./middlewares/errorHandler.middleware.js";
 
 const app = express();
 
@@ -19,8 +20,12 @@ app.use(cookieParser());
 
 // Routes import
 import userRouter from "./routes/user.routes.js";
+import departmentRouter from "./routes/department.routes.js";
 
 // Routes declaration
 app.use("/api/v1/users", userRouter);
+app.use("/api/v1/departments", departmentRouter);
+
+app.use(errorHandler);
 
 export { app };
