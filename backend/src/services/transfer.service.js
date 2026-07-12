@@ -4,12 +4,27 @@ import { ApiError } from "../utils/apierror.js";
 // ────────────────────────────────────────────────────────────────
 // REQUEST TRANSFER
 // ────────────────────────────────────────────────────────────────
+const canManageTransfers = (user) => ["Admin", "AssetManager"].includes(user.role);
+
+const canAccessTransferAsset = (asset, user) => {
+    if (canManageTransfers(user)) return true;
+    if (user.role === "Employee") return asset.currentHolderUserId === user.userId;
+    return user.role === "DepartmentHead" && user.departmentId && (
+        asset.currentHolderDepartmentId === user.departmentId ||
+        asset.holderUser?.departmentId === user.departmentId
+    );
+};
+
 /**
  * Create a transfer request. Fills currentHolderUserId from the asset.
  */
-export const requestTransfer = async ({ assetId, requestedToUserId, reason, requestedBy }) => {
-    const asset = await prisma.asset.findUnique({ where: { assetId } });
+export const requestTransfer = async ({ assetId, requestedToUserId, reason, requestedBy, actor }) => {
+    const asset = await prisma.asset.findUnique({
+        where: { assetId },
+        include: { holderUser: { select: { departmentId: true } } },
+    });
     if (!asset) throw new ApiError(404, "Asset not found");
+    if (!canAccessTransferAsset(asset, actor)) throw new ApiError(403, "You cannot request a transfer for this asset");
 
     // Verify the target user exists
     const targetUser = await prisma.user.findUnique({ where: { userId: requestedToUserId } });
@@ -42,7 +57,7 @@ export const requestTransfer = async ({ assetId, requestedToUserId, reason, requ
  * update asset holder, set transfer status to Approved.
  * All in a single transaction.
  */
-export const approveTransfer = async (transferId, approvedBy) => {
+export const approveTransfer = async (transferId, approver) => {
     const transfer = await prisma.transferRequest.findUnique({
         where: { transferId },
     });
@@ -52,6 +67,14 @@ export const approveTransfer = async (transferId, approvedBy) => {
         throw new ApiError(400, `Transfer cannot be approved — current status: ${transfer.status}`);
     }
 
+    const asset = await prisma.asset.findUnique({
+        where: { assetId: transfer.assetId },
+        include: { holderUser: { select: { departmentId: true } } },
+    });
+    if (!asset || !canAccessTransferAsset(asset, approver)) {
+        throw new ApiError(403, "You cannot approve this transfer");
+    }
+    const approvedBy = approver.userId;
     const operations = [];
 
     // 1. End the current active allocation (if any)
@@ -131,7 +154,7 @@ export const approveTransfer = async (transferId, approvedBy) => {
 // ────────────────────────────────────────────────────────────────
 // REJECT TRANSFER
 // ────────────────────────────────────────────────────────────────
-export const rejectTransfer = async (transferId, approvedBy, reason) => {
+export const rejectTransfer = async (transferId, approver, reason) => {
     const transfer = await prisma.transferRequest.findUnique({
         where: { transferId },
     });
@@ -141,11 +164,19 @@ export const rejectTransfer = async (transferId, approvedBy, reason) => {
         throw new ApiError(400, `Transfer cannot be rejected — current status: ${transfer.status}`);
     }
 
+    const asset = await prisma.asset.findUnique({
+        where: { assetId: transfer.assetId },
+        include: { holderUser: { select: { departmentId: true } } },
+    });
+    if (!asset || !canAccessTransferAsset(asset, approver)) {
+        throw new ApiError(403, "You cannot reject this transfer");
+    }
+
     return prisma.transferRequest.update({
         where: { transferId },
         data: {
             status: "Rejected",
-            approvedBy,
+            approvedBy: approver.userId,
             approvedAt: new Date(),
             reason: reason || transfer.reason,
         },
@@ -155,17 +186,31 @@ export const rejectTransfer = async (transferId, approvedBy, reason) => {
 // ────────────────────────────────────────────────────────────────
 // LIST TRANSFERS
 // ────────────────────────────────────────────────────────────────
-export const listTransfers = async (filters, { skip, take }) => {
-    const where = {};
-    if (filters.status) where.status = filters.status;
-    if (filters.assetId) where.assetId = parseInt(filters.assetId, 10);
+export const listTransfers = async (filters, { skip, take }, user) => {
+    const conditions = [];
+    if (filters.status) conditions.push({ status: filters.status });
+    if (filters.assetId) conditions.push({ assetId: parseInt(filters.assetId, 10) });
     if (filters.userId) {
-        where.OR = [
+        conditions.push({ OR: [
             { requestedBy: parseInt(filters.userId, 10) },
             { requestedToUserId: parseInt(filters.userId, 10) },
             { currentHolderUserId: parseInt(filters.userId, 10) },
-        ];
+        ] });
     }
+    if (user.role === "Employee") {
+        conditions.push({ OR: [
+            { requestedBy: user.userId },
+            { requestedToUserId: user.userId },
+            { currentHolderUserId: user.userId },
+        ] });
+    } else if (user.role === "DepartmentHead") {
+        if (!user.departmentId) conditions.push({ transferId: -1 });
+        else conditions.push({ asset: { OR: [
+            { currentHolderDepartmentId: user.departmentId },
+            { holderUser: { departmentId: user.departmentId } },
+        ] } });
+    }
+    const where = { AND: conditions };
 
     const [transfers, total] = await Promise.all([
         prisma.transferRequest.findMany({

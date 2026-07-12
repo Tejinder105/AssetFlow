@@ -15,6 +15,7 @@ export const allocate = async ({
     allocatedToDepartmentId,
     allocatedBy,
     expectedReturnDate,
+    actor,
 }) => {
     // Guard: check for existing active allocation on this asset
     const active = await prisma.allocation.findFirst({
@@ -38,6 +39,21 @@ export const allocate = async ({
     // Verify the asset exists and is Available
     const asset = await prisma.asset.findUnique({ where: { assetId } });
     if (!asset) throw new ApiError(404, "Asset not found");
+    if (actor?.role === "DepartmentHead") {
+        if (!actor.departmentId) throw new ApiError(403, "Department heads must belong to a department");
+        if (allocatedToDepartmentId && allocatedToDepartmentId !== actor.departmentId) {
+            throw new ApiError(403, "You can allocate assets only to your department");
+        }
+        if (allocatedToUserId) {
+            const recipient = await prisma.user.findUnique({
+                where: { userId: allocatedToUserId },
+                select: { departmentId: true },
+            });
+            if (!recipient || recipient.departmentId !== actor.departmentId) {
+                throw new ApiError(403, "You can allocate assets only to employees in your department");
+            }
+        }
+    }
     if (asset.status !== "Available") {
         throw new ApiError(400, `Asset cannot be allocated — current status: ${asset.status}`);
     }
@@ -131,12 +147,23 @@ export const returnAsset = async (allocationId, { returnConditionNotes, returned
 // ────────────────────────────────────────────────────────────────
 // LIST ALLOCATIONS
 // ────────────────────────────────────────────────────────────────
-export const listAllocations = async (filters, { skip, take }) => {
-    const where = {};
-    if (filters.assetId) where.assetId = parseInt(filters.assetId, 10);
-    if (filters.userId) where.allocatedToUserId = parseInt(filters.userId, 10);
-    if (filters.departmentId) where.allocatedToDepartmentId = parseInt(filters.departmentId, 10);
-    if (filters.status) where.status = filters.status;
+export const listAllocations = async (filters, { skip, take }, user) => {
+    const conditions = [];
+    if (filters.assetId) conditions.push({ assetId: parseInt(filters.assetId, 10) });
+    if (filters.userId) conditions.push({ allocatedToUserId: parseInt(filters.userId, 10) });
+    if (filters.departmentId) conditions.push({ allocatedToDepartmentId: parseInt(filters.departmentId, 10) });
+    if (filters.status) conditions.push({ status: filters.status });
+
+    if (user.role === "Employee") {
+        conditions.push({ allocatedToUserId: user.userId });
+    } else if (user.role === "DepartmentHead") {
+        if (!user.departmentId) conditions.push({ allocationId: -1 });
+        else conditions.push({ OR: [
+            { allocatedToDepartmentId: user.departmentId },
+            { allocatedToUser: { departmentId: user.departmentId } },
+        ] });
+    }
+    const where = { AND: conditions };
 
     const [allocations, total] = await Promise.all([
         prisma.allocation.findMany({

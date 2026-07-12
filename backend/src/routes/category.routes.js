@@ -19,12 +19,14 @@ import {
 
 const router = Router();
 
-router.use(verifyJWT, requireRole("Admin"));
+router.use(verifyJWT);
 
 router
     .route("/")
-    .get(validate(validateCategoryListQuery, "query"), listCategoriesController)
-    .post(validate(validateCreateCategory), createCategoryController);
+    .get(requireRole("Admin", "Asset Manager"), validate(validateCategoryListQuery, "query"), listCategoriesController)
+    .post(requireRole("Admin"), validate(validateCreateCategory), createCategoryController);
+
+router.use(requireRole("Admin"));
 
 router.route("/:id").put(validate(validateUpdateCategory), updateCategoryController);
 router

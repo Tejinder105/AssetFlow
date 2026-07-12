@@ -8,6 +8,7 @@ export const requestTransfer = asyncHandler(async (req, res) => {
     const transfer = await transferService.requestTransfer({
         ...req.body,
         requestedBy: req.user.userId,
+        actor: req.user,
     });
 
     res.status(201).json(new ApiResponse(201, { transfer }, "Transfer request created"));
@@ -16,7 +17,7 @@ export const requestTransfer = asyncHandler(async (req, res) => {
 // PATCH /api/transfers/:id/approve
 export const approveTransfer = asyncHandler(async (req, res) => {
     const transferId = parseInt(req.params.id, 10);
-    const transfer = await transferService.approveTransfer(transferId, req.user.userId);
+    const transfer = await transferService.approveTransfer(transferId, req.user);
 
     res.status(200).json(new ApiResponse(200, { transfer }, "Transfer approved"));
 });
@@ -26,7 +27,7 @@ export const rejectTransfer = asyncHandler(async (req, res) => {
     const transferId = parseInt(req.params.id, 10);
     const transfer = await transferService.rejectTransfer(
         transferId,
-        req.user.userId,
+        req.user,
         req.body.reason
     );
 
@@ -36,7 +37,7 @@ export const rejectTransfer = asyncHandler(async (req, res) => {
 // GET /api/transfers
 export const listTransfers = asyncHandler(async (req, res) => {
     const pagination = parsePagination(req.query);
-    const { transfers, total } = await transferService.listTransfers(req.query, pagination);
+    const { transfers, total } = await transferService.listTransfers(req.query, pagination, req.user);
 
     res.status(200).json(
         new ApiResponse(200, paginatedResponse(transfers, total, pagination.page, pagination.limit), "Transfers fetched")

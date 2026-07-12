@@ -8,6 +8,7 @@ export const allocateAsset = asyncHandler(async (req, res) => {
     const allocation = await allocationService.allocate({
         ...req.body,
         allocatedBy: req.user.userId,
+        actor: req.user,
     });
 
     res.status(201).json(new ApiResponse(201, { allocation }, "Asset allocated successfully"));
@@ -27,7 +28,7 @@ export const returnAsset = asyncHandler(async (req, res) => {
 // GET /api/allocations
 export const listAllocations = asyncHandler(async (req, res) => {
     const pagination = parsePagination(req.query);
-    const { allocations, total } = await allocationService.listAllocations(req.query, pagination);
+    const { allocations, total } = await allocationService.listAllocations(req.query, pagination, req.user);
 
     res.status(200).json(
         new ApiResponse(200, paginatedResponse(allocations, total, pagination.page, pagination.limit), "Allocations fetched")

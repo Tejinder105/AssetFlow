@@ -17,7 +17,7 @@ router.use(verifyJWT);
 router
     .route("/")
     .get(listTransfers)
-    .post(requireRole("Admin", "Asset Manager"), validate(validateRequestTransfer), requestTransfer);
+    .post(requireRole("Admin", "Asset Manager", "Department Head", "Employee"), validate(validateRequestTransfer), requestTransfer);
 
 router.patch("/:id/approve", requireRole("Admin", "Asset Manager", "Department Head"), validate(validateApproveReject), approveTransfer);
 router.patch("/:id/reject", requireRole("Admin", "Asset Manager", "Department Head"), validate(validateApproveReject), rejectTransfer);
