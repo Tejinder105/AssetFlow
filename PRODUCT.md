@@ -14,7 +14,11 @@ IT and Operations Admins tracking and assigning corporate assets across the comp
 
 ## Product Purpose
 
-To centralize enterprise asset and resource management by tracking the complete lifecycle of physical assets, preventing allocation and booking conflicts, streamlining maintenance and audit workflows, and providing real-time operational visibility. Success means accurate asset tracking, efficient resource utilization, reduced manual work, zero double allocations, timely maintenance, and complete accountability across the organization.
+To centralize enterprise asset and resource management by tracking the complete lifecycle of physical assets, preventing allocation and booking conflicts, streamlining maintenance and audit workflows, and providing real-time operational visibility.
+
+**Vision:** Simplify and digitize how organizations track, allocate, and maintain their physical assets and shared resources through a centralized ERP platform. This applies to any organization with equipment, furniture, vehicles, or shared spaces (offices, schools, hospitals, factories, agencies). 
+
+**Scope:** The platform aims to reduce manual tracking inefficiencies (spreadsheets, paper logs) by enabling structured asset lifecycles, centralized resource booking, and real-time visibility into who holds what, where it is, and its condition. AssetFlow focuses on delivering core ERP functionality with clean architecture, role-based workflows, and scalable module design **without** touching purchasing, invoicing, or accounting concerns.
 
 ## Positioning
 
