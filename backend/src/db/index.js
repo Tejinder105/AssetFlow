@@ -14,10 +14,6 @@ const adapter = new PrismaMariaDb({
 // Create the Prisma client with the adapter
 const prisma = new PrismaClient({ adapter });
 
-/**
- * Test the database connection.
- * Called from src/index.js on startup.
- */
 const connectDB = async () => {
     try {
         // Run a lightweight query to verify connectivity
