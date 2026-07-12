@@ -118,4 +118,3 @@ dist
 .pnp.*
 
 # Prisma generated client
-generated/
