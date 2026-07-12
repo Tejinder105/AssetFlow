@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { verifyJWT } from "../middlewares/auth.middleware.js";
-import { requireRole } from "../middlewares/role.middleware.js";
-import { validate } from "../middlewares/validate.middleware.js";
+import { authenticate as verifyJWT } from "../middleware/authenticate.middleware.js";
+import { requireRole } from "../middleware/role.middleware.js";
+import { validate } from "../middleware/validate.middleware.js";
 import { validateRequestTransfer, validateApproveReject } from "../validators/transfer.validator.js";
 import {
     requestTransfer,

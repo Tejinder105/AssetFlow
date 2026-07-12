@@ -6,7 +6,7 @@ const router = Router();
 // These routes will be protected by authenticate + authorize middleware.
 //
 // Example:
-//   import { authenticate } from "../middleware/authenticate.js";
+//   import { authenticate } from "../middleware/authenticate.middleware.js";
 //   import { authorize } from "../middleware/authorize.js";
 //
 //   router.get("/", authenticate, authorize("Admin"), getAllUsers);

@@ -7,8 +7,8 @@ import {
     me,
 } from "../controllers/auth.controller.js";
 import { validate, registerSchema, loginSchema } from "../validators/auth.validator.js";
-import { authenticate } from "../middleware/authenticate.js";
-import { authLimiter } from "../middleware/rateLimiter.js";
+import { authenticate } from "../middleware/authenticate.middleware.js";
+import { authLimiter } from "../middleware/rateLimiter.middleware.js";
 
 const router = Router();
 

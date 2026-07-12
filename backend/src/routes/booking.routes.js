@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { verifyJWT } from "../middlewares/auth.middleware.js";
-import { validate } from "../middlewares/validate.middleware.js";
+import { authenticate as verifyJWT } from "../middleware/authenticate.middleware.js";
+import { validate } from "../middleware/validate.middleware.js";
 import { validateCreateBooking, validateReschedule, validateCancel } from "../validators/booking.validator.js";
 import {
     createBooking,

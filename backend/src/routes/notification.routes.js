@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { verifyJWT } from "../middlewares/auth.middleware.js";
+import { authenticate as verifyJWT } from "../middleware/authenticate.middleware.js";
 import {
     listNotifications,
     markRead,

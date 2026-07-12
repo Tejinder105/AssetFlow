@@ -3,7 +3,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
 import env from "./config/env.config.js";
-import { errorHandler } from "./middleware/errorHandler.js";
+import { errorHandler } from "./middleware/errorHandler.middleware.js";
 import apiRouter from "./routes/index.js";
 
 const app = express();
