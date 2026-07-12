@@ -116,7 +116,7 @@ export default function AllocationPage() {
                 <div className="grid gap-2">
                   <Label className="text-foreground">Expected Return Date (Optional)</Label>
                   <Popover>
-                    <PopoverTrigger asChild>
+                    <PopoverTrigger>
                       <Button
                         variant={"outline"}
                         className={`justify-start text-left font-normal bg-background text-foreground border-border h-10 ${!date && "text-muted-foreground"}`}
@@ -130,7 +130,7 @@ export default function AllocationPage() {
                         mode="single"
                         selected={date}
                         onSelect={setDate}
-                        initialFocus
+                        autoFocus
                         className="bg-background text-foreground"
                       />
                     </PopoverContent>

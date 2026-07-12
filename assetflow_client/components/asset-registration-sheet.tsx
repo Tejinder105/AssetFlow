@@ -38,7 +38,7 @@ export function AssetRegistrationSheet({ children }: { children: React.ReactNode
   
   return (
     <Sheet>
-      <SheetTrigger asChild>
+      <SheetTrigger>
         {children}
       </SheetTrigger>
       <SheetContent className="sm:max-w-xl w-full flex flex-col p-0 bg-background border-l-border">
@@ -97,7 +97,7 @@ export function AssetRegistrationSheet({ children }: { children: React.ReactNode
               <div className="grid gap-2">
                 <Label className="text-foreground">Acquisition Date</Label>
                 <Popover>
-                  <PopoverTrigger asChild>
+                  <PopoverTrigger>
                     <Button
                       variant={"outline"}
                       className={`justify-start text-left font-normal bg-background text-foreground border-border ${!date && "text-muted-foreground"}`}
@@ -111,7 +111,7 @@ export function AssetRegistrationSheet({ children }: { children: React.ReactNode
                       mode="single"
                       selected={date}
                       onSelect={setDate}
-                      initialFocus
+                      autoFocus
                       className="bg-background text-foreground"
                     />
                   </PopoverContent>

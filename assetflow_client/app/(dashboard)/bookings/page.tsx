@@ -98,7 +98,7 @@ export default function ResourceBookingPage() {
       {/* Action Button */}
       <div>
         <Dialog>
-          <DialogTrigger asChild>
+          <DialogTrigger>
             <Button className="bg-[#007a5a] hover:bg-[#007a5a]/90 text-white rounded-full px-8 py-6 h-auto shadow-none font-bold text-base">
               Book a slot
             </Button>

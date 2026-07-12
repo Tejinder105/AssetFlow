@@ -6,6 +6,7 @@ import departmentRouter from "./department.routes.js";
 import categoryRouter from "./category.routes.js";
 import employeeRouter from "./employee.routes.js";
 import allocationRouter from "./allocation.routes.js";
+import assetRouter from "./asset.routes.js";
 import transferRouter from "./transfer.routes.js";
 import bookingRouter from "./booking.routes.js";
 import maintenanceRouter from "./maintenance.routes.js";
@@ -26,6 +27,7 @@ router.use("/v1/categories", categoryRouter);
 router.use("/v1/employees", employeeRouter);
 
 // ── Asset Operations ───────────────────────────────────────────
+router.use("/v1/assets", assetRouter);
 router.use("/v1/allocations", allocationRouter);
 router.use("/v1/transfers", transferRouter);
 router.use("/v1/bookings", bookingRouter);

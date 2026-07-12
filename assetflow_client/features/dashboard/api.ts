@@ -53,25 +53,26 @@ async function countFromEndpoint(
 }
 
 export async function fetchDashboardStats(): Promise<DashboardStats> {
-  // Count assets by querying the allocations endpoint with status filters
-  // Since there's no standalone asset list endpoint, we get counts from
-  // the employee listing (all users page=1&limit=1) and allocations
   const [
+    availableCount,
     allocatedCount,
+    maintenanceCount,
     overdueCount,
     pendingTransfers,
     activeBookings,
   ] = await Promise.all([
+    countFromEndpoint("/api/v1/assets", { status: "Available" }),
     countFromEndpoint("/api/v1/allocations", { status: "Active" }),
+    countFromEndpoint("/api/v1/assets", { status: "UnderMaintenance" }),
     countFromEndpoint("/api/v1/allocations/overdue"),
     countFromEndpoint("/api/v1/transfers", { status: "Requested" }),
     countFromEndpoint("/api/v1/bookings", { status: "Upcoming" }),
   ])
 
   return {
-    availableAssets: 0,    // No standalone asset count endpoint
+    availableAssets: availableCount,
     allocatedAssets: allocatedCount,
-    maintenanceAssets: 0,  // Would need a maintenance count
+    maintenanceAssets: maintenanceCount,
     activeBookings,
     pendingTransfers,
     overdueAllocations: overdueCount,

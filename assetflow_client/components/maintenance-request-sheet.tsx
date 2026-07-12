@@ -28,7 +28,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 export function MaintenanceRequestSheet({ children }: { children: React.ReactNode }) {
   return (
     <Sheet>
-      <SheetTrigger asChild>
+      <SheetTrigger>
         {children}
       </SheetTrigger>
       <SheetContent className="sm:max-w-xl w-full flex flex-col p-0 bg-background border-l-border">
