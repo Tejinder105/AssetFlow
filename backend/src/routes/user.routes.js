@@ -2,10 +2,15 @@ import { Router } from "express";
 
 const router = Router();
 
-// TODO: Rebuild routes using Prisma-based controllers
+// TODO: Implement user management routes (CRUD, role updates, etc.)
+// These routes will be protected by authenticate + authorize middleware.
+//
 // Example:
-//   import { registerUser, loginUser } from "../controllers/user.controller.js";
-//   router.route("/register").post(registerUser);
-//   router.route("/login").post(loginUser);
+//   import { authenticate } from "../middleware/authenticate.js";
+//   import { authorize } from "../middleware/authorize.js";
+//
+//   router.get("/", authenticate, authorize("Admin"), getAllUsers);
+//   router.get("/:id", authenticate, getUserById);
+//   router.patch("/:id/role", authenticate, authorize("Admin"), updateUserRole);
 
 export default router;

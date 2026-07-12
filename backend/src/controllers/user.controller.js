@@ -1,9 +1,15 @@
-// TODO: Rebuild user controller using Prisma
-// Import the Prisma client:
+// TODO: Implement user management controllers
+// These should follow the same pattern as auth.controller.js:
+//   - Thin controllers that delegate to a user.service.js
+//   - Use asyncHandler wrapper
+//   - Return ApiResponse instances
 //
-//   import { prisma } from "../db/index.js";
+// Example:
+//   import { asyncHandler } from "../utils/asynchandler.js";
+//   import { ApiResponse } from "../utils/apiresponse.js";
+//   import * as userService from "../services/user.service.js";
 //
-// Example query:
-//   const user = await prisma.user.findUnique({ where: { email } });
-//   const newUser = await prisma.user.create({ data: { name, email, passwordHash } });
-//
+//   export const getAllUsers = asyncHandler(async (req, res) => {
+//       const users = await userService.listUsers(req.query);
+//       res.status(200).json(new ApiResponse(200, { users }, "Users fetched"));
+//   });
