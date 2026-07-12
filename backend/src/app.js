@@ -33,5 +33,10 @@ import employeeRouter from "./routes/employee.routes.js";
 
 app.use("/api/auth", authRouter);
 app.use("/api/v1/users", userRouter);
+app.use("/api/v1/departments", departmentRouter);
+app.use("/api/v1/categories", categoryRouter);
+app.use("/api/v1/employees", employeeRouter);
+
+app.use(errorHandler);
 
 export { app };
