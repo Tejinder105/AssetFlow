@@ -46,6 +46,9 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-foreground: var(--brand-foreground);
 }
 
 :root {
@@ -82,6 +85,9 @@
   --sidebar-accent-foreground: #1d1d1d;
   --sidebar-border: #e6e6e6;
   --sidebar-ring: #4a154b;
+  --brand: #d5f3eb;
+  --brand-hover: #b8e8db;
+  --brand-foreground: #1d1d1d;
 }
 
 .dark {
@@ -117,6 +123,9 @@
   --sidebar-accent-foreground: #ffffff;
   --sidebar-border: #481a54;
   --sidebar-ring: #d9bdde;
+  --brand: #b8e8db;
+  --brand-hover: #96d1c0;
+  --brand-foreground: #1d1d1d;
 }
 
 @layer base {

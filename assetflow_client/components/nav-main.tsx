@@ -45,12 +45,19 @@ export function NavMain({
             const isActive = pathname === item.url || pathname.startsWith(item.url + "/");
             return (
               <SidebarMenuItem key={item.title}>
-                <SidebarMenuButton tooltip={item.title} isActive={isActive} asChild>
-                  <Link href={item.url} className="flex items-center gap-2 w-full">
-                    {item.icon}
-                    <span>{item.title}</span>
-                  </Link>
-                </SidebarMenuButton>
+                <SidebarMenuButton
+                  tooltip={item.title}
+                  isActive={isActive}
+                  render={
+                    <Link
+                      href={item.url}
+                      className="flex items-center gap-2 w-full text-lg font-bold"
+                    >
+                      {item.icon}
+                      <span className="text-md">{item.title}</span>
+                    </Link>
+                  }
+                />
               </SidebarMenuItem>
             )
           })}

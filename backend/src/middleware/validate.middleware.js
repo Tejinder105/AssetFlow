@@ -5,7 +5,12 @@ export const validate = (validator, source = "body") => {
         try {
             const payload = req[source] || {};
             const validated = validator(payload);
-            req[source] = validated;
+            Object.defineProperty(req, source, {
+                value: validated,
+                writable: true,
+                enumerable: true,
+                configurable: true
+            });
             next();
         } catch (error) {
             if (error instanceof ApiError) {

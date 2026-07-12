@@ -55,7 +55,8 @@ const readJson = async (response: Response) => {
 
   try {
     return JSON.parse(text)
-  } catch {
+  } catch (err) {
+    console.error("INVALID JSON Response:", text)
     throw new ApiRequestError("The server returned an invalid JSON response", response.status)
   }
 }

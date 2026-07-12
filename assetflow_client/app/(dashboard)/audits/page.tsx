@@ -1,7 +1,8 @@
 "use client"
 
-import * as React from "react"
-import { AlertCircleIcon } from "lucide-react"
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { Loader2Icon, PlusIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -12,74 +13,149 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
+import { authenticatedApiRequest } from "@/lib/api"
+import type { AuditCycle } from "@/features/audits/schema"
+import { apiEnvelopeSchema, paginationSchema } from "@/features/api/schema"
+import { z } from "zod"
 
-const auditItems = [
-  { id: "AF-003", name: "Dell laptop", location: "Desk E12", status: "Verified" },
-  { id: "AF-9921", name: "Office chair", location: "Desk E14", status: "Missing" },
-  { id: "AF-9838", name: "Monitor", location: "Desk E15", status: "Damaged" },
-]
+const cyclesResponseSchema = apiEnvelopeSchema(
+  z.object({
+    data: z.array(
+      z.object({
+        auditCycleId: z.number(),
+        name: z.string(),
+        status: z.enum(["Planned", "Ongoing", "Closed"]),
+        startDate: z.string(),
+        endDate: z.string(),
+        scopeDepartment: z.object({
+          departmentId: z.number(),
+          name: z.string(),
+        }).nullable(),
+        auditors: z.array(z.any()).optional(),
+        _count: z.object({
+          items: z.number(),
+          auditors: z.number(),
+        }),
+      })
+    ),
+    pagination: paginationSchema,
+  })
+)
 
-export default function AuditPage() {
+async function fetchAuditCycles(page = 1, limit = 50) {
+  return authenticatedApiRequest({
+    path: "/api/v1/audits",
+    query: { page, limit },
+    responseSchema: cyclesResponseSchema,
+  })
+}
+
+export default function AuditsPage() {
+  const router = useRouter()
+  const [cycles, setCycles] = useState<AuditCycle[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true)
+      setError(null)
+      try {
+        const data = await fetchAuditCycles()
+        setCycles(data.data.data as AuditCycle[])
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load audit cycles")
+      } finally {
+        setLoading(false)
+      }
+    }
+    load()
+  }, [])
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "Ongoing":
+        return <Badge className="bg-blue-100 text-blue-700 border-blue-200">{status}</Badge>
+      case "Closed":
+        return <Badge variant="outline" className="text-muted-foreground">{status}</Badge>
+      default:
+        return <Badge variant="secondary">{status}</Badge>
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex flex-1 items-center justify-center p-8">
+        <Loader2Icon className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center gap-2 p-8">
+        <p className="text-sm text-destructive">{error}</p>
+        <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
+          Retry
+        </Button>
+      </div>
+    )
+  }
+
   return (
-    <div className="flex flex-1 flex-col gap-8 p-4 md:p-6 lg:p-8 max-w-4xl w-full mx-auto">
-      
-      {/* Header Card (Canvas Cream / bg-muted) */}
-      <div className="bg-muted text-foreground p-6 rounded-xl border border-border">
-        <h2 className="text-xl font-bold mb-1">Q3 audit: Engineering dept - 1-15 jul</h2>
-        <p className="text-muted-foreground text-sm">Auditors: A. Rao, S. Iqbal</p>
+    <div className="flex flex-1 flex-col gap-6 p-4 md:p-6 lg:p-8 max-w-6xl w-full mx-auto">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-semibold tracking-tight text-foreground">Audit Cycles</h2>
+        <Button className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-6 shadow-none font-bold">
+          <PlusIcon className="h-4 w-4 mr-2" />
+          New Audit
+        </Button>
       </div>
 
-      {/* Verification Table */}
       <div className="rounded-xl border border-border bg-background overflow-hidden">
         <Table>
           <TableHeader className="bg-muted/30">
             <TableRow className="hover:bg-transparent">
-              <TableHead className="font-semibold text-foreground">Asset</TableHead>
-              <TableHead className="font-semibold text-foreground">Expected location</TableHead>
-              <TableHead className="font-semibold text-foreground text-right">Verification</TableHead>
+              <TableHead className="font-semibold text-foreground">Audit</TableHead>
+              <TableHead className="font-semibold text-foreground">Status</TableHead>
+              <TableHead className="font-semibold text-foreground">Items</TableHead>
+              <TableHead className="font-semibold text-foreground">Auditors</TableHead>
+              <TableHead className="font-semibold text-foreground text-right">Date Range</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {auditItems.map((item) => (
-              <TableRow key={item.id} className="hover:bg-muted/20">
-                <TableCell className="font-medium text-foreground py-4">
-                  {item.id} {item.name}
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {item.location}
-                </TableCell>
-                <TableCell className="text-right">
-                  {/* Status Pills */}
-                  <span className={`
-                    inline-flex items-center justify-center px-4 py-1.5 text-sm font-semibold rounded-full border
-                    ${item.status === 'Verified' ? 'bg-[#e2f5ec] text-[#007a5a] border-[#007a5a]/30' : ''}
-                    ${item.status === 'Missing' ? 'bg-destructive/10 text-destructive border-destructive/30' : ''}
-                    ${item.status === 'Damaged' ? 'bg-muted text-muted-foreground border-border' : ''}
-                  `}>
-                    {item.status}
-                  </span>
+            {cycles.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                  No audit cycles found
                 </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              cycles.map((cycle) => (
+                <TableRow
+                  key={cycle.auditCycleId}
+                  className="cursor-pointer hover:bg-muted/20 transition-colors"
+                  onClick={() => router.push(`/audits/${cycle.auditCycleId}`)}
+                >
+                  <TableCell className="font-medium text-foreground py-4">
+                    {cycle.name}
+                    {cycle.scopeDepartment?.name && (
+                      <div className="text-xs text-muted-foreground mt-1">{cycle.scopeDepartment.name}</div>
+                    )}
+                  </TableCell>
+                  <TableCell>{getStatusBadge(cycle.status)}</TableCell>
+                  <TableCell className="text-muted-foreground">{cycle._count?.items ?? 0}</TableCell>
+                  <TableCell className="text-muted-foreground">{cycle._count?.auditors ?? 0}</TableCell>
+                  <TableCell className="text-right text-muted-foreground">
+                    {new Date(cycle.startDate).toLocaleDateString()} - {new Date(cycle.endDate).toLocaleDateString()}
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
-
-      {/* Discrepancy Banner */}
-      <div className="bg-[#fff9c4] border border-[#fbc02d]/40 rounded-xl p-4 flex items-center gap-3">
-        <AlertCircleIcon className="h-5 w-5 text-[#fbc02d]" />
-        <p className="font-medium text-[#f57f17]">
-          2 assets flagged - discrepancy report generated automatically
-        </p>
-      </div>
-
-      {/* Action Button */}
-      <div className="pt-2">
-        <Button className="bg-[#e2f5ec] hover:bg-[#e2f5ec]/80 text-[#007a5a] border border-[#007a5a]/20 rounded-full px-8 py-6 h-auto shadow-none font-bold text-base">
-          Close audit cycle
-        </Button>
-      </div>
-
     </div>
   )
 }

@@ -16,7 +16,7 @@ type OrganizationState = {
   employees: OrganizationEmployee[]
   isLoading: boolean
   error: string | null
-  loadOrganization: (token: string) => Promise<void>
+  loadOrganization: () => Promise<void>
   clearError: () => void
 }
 
@@ -27,13 +27,13 @@ export const useOrganizationStore = create<OrganizationState>((set) => ({
   isLoading: false,
   error: null,
 
-  loadOrganization: async (token) => {
+  loadOrganization: async () => {
     set({ isLoading: true, error: null })
     try {
       const [departments, categories, employees] = await Promise.all([
-        fetchDepartmentsRequest(token),
-        fetchCategoriesRequest(token),
-        fetchEmployeesRequest(token),
+        fetchDepartmentsRequest(),
+        fetchCategoriesRequest(),
+        fetchEmployeesRequest(),
       ])
 
       set({

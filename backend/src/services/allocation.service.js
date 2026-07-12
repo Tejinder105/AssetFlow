@@ -21,7 +21,7 @@ export const allocate = async ({
     const active = await prisma.allocation.findFirst({
         where: { assetId, status: "Active" },
         include: {
-            allocatedToUser: { select: { userId: true, name: true, email: true } },
+            allocatedToUser: { select: { userId: true, name: true, email: true, departmentId: true, department: { select: { departmentId: true, name: true } } } },
             allocatedToDepartment: { select: { departmentId: true, name: true } },
         },
     });
@@ -173,7 +173,7 @@ export const listAllocations = async (filters, { skip, take }, user) => {
             orderBy: { createdAt: "desc" },
             include: {
                 asset: { select: { assetId: true, assetTag: true, name: true, status: true } },
-                allocatedToUser: { select: { userId: true, name: true, email: true } },
+                allocatedToUser: { select: { userId: true, name: true, email: true, departmentId: true, department: { select: { departmentId: true, name: true } } } },
                 allocatedToDepartment: { select: { departmentId: true, name: true } },
                 allocator: { select: { userId: true, name: true } },
             },
@@ -201,7 +201,7 @@ export const getOverdue = async ({ skip, take }) => {
             orderBy: { expectedReturnDate: "asc" },
             include: {
                 asset: { select: { assetId: true, assetTag: true, name: true } },
-                allocatedToUser: { select: { userId: true, name: true, email: true } },
+                allocatedToUser: { select: { userId: true, name: true, email: true, departmentId: true, department: { select: { departmentId: true, name: true } } } },
                 allocatedToDepartment: { select: { departmentId: true, name: true } },
             },
         }),

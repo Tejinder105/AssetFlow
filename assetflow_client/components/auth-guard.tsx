@@ -10,23 +10,31 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   const accessToken = useAuthStore((state) => state.accessToken)
   const status = useAuthStore((state) => state.status)
   const loadCurrentUser = useAuthStore((state) => state.loadCurrentUser)
-  const [checked, setChecked] = useState(false)
+  const [checking, setChecking] = useState(true)
 
   useEffect(() => {
-    // No persisted token — go straight to login
-    if (!accessToken) {
-      router.replace("/login")
-      return
+    const checkAuth = async () => {
+      const token = useAuthStore.getState().accessToken
+      if (!token) {
+        router.replace("/login")
+        setChecking(false)
+        return
+      }
+
+      try {
+        await loadCurrentUser()
+      } catch {
+        router.replace("/login")
+      } finally {
+        setChecking(false)
+      }
     }
 
-    // Token exists — validate it (will auto-refresh if expired)
-    loadCurrentUser()
-      .then(() => setChecked(true))
-      .catch(() => router.replace("/login"))
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+    checkAuth()
+  }, [router, loadCurrentUser])
 
   // Still checking → show spinner
-  if (!checked || status === "loading" || status === "idle") {
+  if (checking || status === "loading" || status === "idle") {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <Loader2Icon className="h-6 w-6 animate-spin text-muted-foreground" />

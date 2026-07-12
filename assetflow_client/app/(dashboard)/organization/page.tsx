@@ -46,7 +46,7 @@ export default function OrganizationPage() {
       return
     }
 
-    loadOrganization(accessToken).catch(() => undefined)
+    loadOrganization().catch(() => undefined)
   }, [accessToken, loadOrganization, router])
 
   return (

@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
@@ -161,10 +162,13 @@ export function LoginForm({
             </FieldGroup>
           </form>
           <div className="relative hidden bg-muted md:block">
-            <img
-              src="/placeholder.svg"
-              alt="AssetFlow workspace"
-              className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
+            <Image
+              src="/images/colorful-flow-background_52683-43164.avif"
+              alt="AssetFlow background"
+              fill
+              priority
+              sizes="50vw"
+              className="object-cover dark:brightness-[0.5]"
             />
           </div>
         </CardContent>

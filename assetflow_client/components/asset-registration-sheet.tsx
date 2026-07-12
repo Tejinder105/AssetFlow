@@ -58,7 +58,7 @@ export function AssetRegistrationSheet({ children, categories, onRegistered }: P
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger>{children}</SheetTrigger>
+      <SheetTrigger asChild>{children}</SheetTrigger>
       <SheetContent className="sm:max-w-xl w-full">
         <SheetHeader>
           <SheetTitle>Register new asset</SheetTitle>
