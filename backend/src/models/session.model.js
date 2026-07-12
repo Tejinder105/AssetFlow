@@ -1,3 +1,3 @@
 import { prisma } from '../db/index.js';
 
-export const User = prisma.user;
+export const Session = prisma.session;

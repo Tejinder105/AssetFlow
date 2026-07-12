@@ -28,9 +28,13 @@
     "jsonwebtoken": "^9.0.3",
     "mariadb": "^3.5.3",
     "multer": "^2.2.0",
-    "prettier": "^3.9.5"
+    "prettier": "^3.9.5",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "prisma": "^7.8.0"
+  },
+  "prisma": {
+    "schema": "src/prisma/schema.prisma"
   }
 }

@@ -1,0 +1,22 @@
+import { prisma } from '../db/index.js';
+
+export { User } from './user.model.js';
+export { Department } from './department.model.js';
+export { AssetCategory } from './assetCategory.model.js';
+export { CategoryField } from './categoryField.model.js';
+export { Asset } from './asset.model.js';
+export { AssetCustomFieldValue } from './assetCustomFieldValue.model.js';
+export { AssetAttachment } from './assetAttachment.model.js';
+export { AssetStatusLog } from './assetStatusLog.model.js';
+export { Allocation } from './allocation.model.js';
+export { TransferRequest } from './transferRequest.model.js';
+export { Booking } from './booking.model.js';
+export { MaintenanceRequest } from './maintenanceRequest.model.js';
+export { AuditCycle } from './auditCycle.model.js';
+export { AuditCycleAuditor } from './auditCycleAuditor.model.js';
+export { AuditItem } from './auditItem.model.js';
+export { DiscrepancyReport } from './discrepancyReport.model.js';
+export { Notification } from './notification.model.js';
+export { ActivityLog } from './activityLog.model.js';
+export { PasswordResetToken } from './passwordResetToken.model.js';
+export { Session } from './session.model.js';
