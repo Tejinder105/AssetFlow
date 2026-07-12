@@ -20,7 +20,7 @@ router.get("/overdue", requireRole("Admin", "Asset Manager"), getOverdueAllocati
 router
     .route("/")
     .get(listAllocations)
-    .post(requireRole("Admin", "Asset Manager"), validate(validateAllocate), allocateAsset);
+    .post(requireRole("Admin", "Asset Manager", "Department Head"), validate(validateAllocate), allocateAsset);
 
 router.post("/:id/return", requireRole("Admin", "Asset Manager"), validate(validateReturn), returnAsset);
 

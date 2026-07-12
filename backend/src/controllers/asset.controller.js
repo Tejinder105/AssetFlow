@@ -6,7 +6,7 @@ import * as assetService from "../services/asset.service.js";
 // GET /api/v1/assets
 export const listAssets = asyncHandler(async (req, res) => {
     const pagination = parsePagination(req.query);
-    const { assets, total } = await assetService.listAssets(req.query, pagination);
+    const { assets, total } = await assetService.listAssets(req.query, pagination, req.user);
 
     res.status(200).json(
         new ApiResponse(200, paginatedResponse(assets, total, pagination.page, pagination.limit), "Assets fetched")
@@ -16,7 +16,7 @@ export const listAssets = asyncHandler(async (req, res) => {
 // GET /api/v1/assets/:id
 export const getAsset = asyncHandler(async (req, res) => {
     const assetId = parseInt(req.params.id, 10);
-    const asset = await assetService.getAssetById(assetId);
+    const asset = await assetService.getAssetById(assetId, req.user);
 
     res.status(200).json(new ApiResponse(200, { asset }, "Asset fetched"));
 });

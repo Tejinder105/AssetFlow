@@ -5,10 +5,13 @@ import { Loader2Icon } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { useCurrentUser } from "@/features/auth/hooks"
+import { can } from "@/lib/permissions"
 import { fetchDashboardStats, fetchRecentActivity } from "@/features/dashboard/api"
 import type { DashboardStats, ActivityLog } from "@/features/dashboard/schema"
 
 export default function DashboardPage() {
+  const user = useCurrentUser()
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [activity, setActivity] = useState<ActivityLog[]>([])
   const [loading, setLoading] = useState(true)
@@ -87,15 +90,9 @@ export default function DashboardPage() {
 
       {/* Actions */}
       <div className="flex flex-wrap gap-4">
-        <Button size="lg" className="px-6 py-6 text-base bg-[#d5f3eb] hover:bg-[#b8e8db] text-zinc-900 border border-zinc-200 shadow-none">
-          + Register Asset
-        </Button>
-        <Button variant="outline" size="lg" className="px-6 py-6 text-base shadow-none">
-          Book Resource
-        </Button>
-        <Button variant="outline" size="lg" className="px-6 py-6 text-base shadow-none">
-          Raise Request
-        </Button>
+        {can(user?.role, "registerAssets") && <Button size="lg" className="px-6 py-6 text-base bg-[#d5f3eb] hover:bg-[#b8e8db] text-zinc-900 border border-zinc-200 shadow-none">+ Register Asset</Button>}
+        {can(user?.role, "bookResources") && <Button variant="outline" size="lg" className="px-6 py-6 text-base shadow-none">Book Resource</Button>}
+        {can(user?.role, "raiseMaintenance") && <Button variant="outline" size="lg" className="px-6 py-6 text-base shadow-none">Raise Request</Button>}
       </div>
 
       {/* Recent Activity */}

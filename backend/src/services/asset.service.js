@@ -24,6 +24,7 @@ const assetSelect = {
         select: {
             userId: true,
             name: true,
+            departmentId: true,
         },
     },
     holderDepartment: {
@@ -37,19 +38,38 @@ const assetSelect = {
 // ────────────────────────────────────────────────────────────────
 // LIST ASSETS
 // ────────────────────────────────────────────────────────────────
-export const listAssets = async (filters, { skip, take }) => {
-    const where = {};
+const canManageAssets = (user) => ["Admin", "AssetManager"].includes(user.role);
 
-    if (filters.status) where.status = filters.status;
-    if (filters.categoryId) where.categoryId = parseInt(filters.categoryId, 10);
-    if (filters.location) where.location = { contains: filters.location };
+const assetScope = (user) => {
+    if (canManageAssets(user)) return null;
+    if (user.role === "Employee") return { currentHolderUserId: user.userId };
+    if (user.role === "DepartmentHead") {
+        if (!user.departmentId) return { assetId: -1 };
+        return {
+            OR: [
+                { currentHolderDepartmentId: user.departmentId },
+                { holderUser: { departmentId: user.departmentId } },
+            ],
+        };
+    }
+    return { assetId: -1 };
+};
+
+export const listAssets = async (filters, { skip, take }, user) => {
+    const conditions = [];
+
+    if (filters.status) conditions.push({ status: filters.status });
+    if (filters.categoryId) conditions.push({ categoryId: parseInt(filters.categoryId, 10) });
+    if (filters.location) conditions.push({ location: { contains: filters.location } });
     if (filters.search) {
-        where.OR = [
+        conditions.push({ OR: [
             { name: { contains: filters.search } },
             { assetTag: { contains: filters.search } },
             { serialNumber: { contains: filters.search } },
-        ];
+        ] });
     }
+    conditions.push(assetScope(user));
+    const where = { AND: conditions.filter(Boolean) };
 
     const [assets, total] = await Promise.all([
         prisma.asset.findMany({
@@ -68,7 +88,7 @@ export const listAssets = async (filters, { skip, take }) => {
 // ────────────────────────────────────────────────────────────────
 // GET ASSET BY ID
 // ────────────────────────────────────────────────────────────────
-export const getAssetById = async (assetId) => {
+export const getAssetById = async (assetId, user) => {
     const asset = await prisma.asset.findUnique({
         where: { assetId },
         select: {
@@ -78,6 +98,15 @@ export const getAssetById = async (assetId) => {
     });
 
     if (!asset) throw new ApiError(404, "Asset not found");
+
+    const scope = assetScope(user);
+    const isAllowed = !scope ||
+        (user.role === "Employee" && asset.holderUser?.userId === user.userId) ||
+        (user.role === "DepartmentHead" && (
+            asset.holderDepartment?.departmentId === user.departmentId ||
+            asset.holderUser?.departmentId === user.departmentId
+        ));
+    if (!isAllowed) throw new ApiError(403, "You do not have access to this asset");
     return asset;
 };
 

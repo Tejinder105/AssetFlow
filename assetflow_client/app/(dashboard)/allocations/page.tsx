@@ -1,192 +1,122 @@
 "use client"
 
 import * as React from "react"
-import { AlertCircleIcon, SearchIcon, CalendarIcon, ArrowRightLeftIcon, HistoryIcon, CheckCircle2Icon } from "lucide-react"
-import { format } from "date-fns"
+import { toast } from "sonner"
 
-import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Textarea } from "@/components/ui/textarea"
-import { Switch } from "@/components/ui/switch"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import { Calendar } from "@/components/ui/calendar"
+import { useCurrentUser } from "@/features/auth/hooks"
+import { can } from "@/lib/permissions"
+import { allocateAsset, decideTransfer, listAllocations, listAssets, listEmployees, listTransfers, requestTransfer } from "@/services/asset.service"
+import type { Allocation, Asset, EmployeeOption, Transfer } from "@/types/asset"
+
+const formatDate = (value: string | null) => value ? new Date(value).toLocaleDateString() : "—"
+const recipient = (allocation: Allocation) => allocation.allocatedToUser?.name || allocation.allocatedToDepartment?.name || "—"
 
 export default function AllocationPage() {
-  // For demonstration: toggle this switch to see both states.
-  const [isAssetAllocated, setIsAssetAllocated] = React.useState(true)
-  const [date, setDate] = React.useState<Date>()
+  const user = useCurrentUser()
+  const [assets, setAssets] = React.useState<Asset[]>([])
+  const [employees, setEmployees] = React.useState<EmployeeOption[]>([])
+  const [allocations, setAllocations] = React.useState<Allocation[]>([])
+  const [transfers, setTransfers] = React.useState<Transfer[]>([])
+  const [selectedAsset, setSelectedAsset] = React.useState("")
+  const [recipientId, setRecipientId] = React.useState("")
+  const [returnDate, setReturnDate] = React.useState("")
+  const [reason, setReason] = React.useState("")
+  const [loading, setLoading] = React.useState(true)
+  const [saving, setSaving] = React.useState(false)
+  const [error, setError] = React.useState<string | null>(null)
+
+  const load = React.useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const [assetResult, employeeResult, allocationResult, transferResult] = await Promise.all([
+        listAssets({ limit: 100 }), listEmployees(), listAllocations(), listTransfers(),
+      ])
+      setAssets(assetResult.data.data)
+      setEmployees(employeeResult.data.items)
+      setAllocations(allocationResult.data.data)
+      setTransfers(transferResult.data.data)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not load allocation data")
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  React.useEffect(() => { void load() }, [load])
+
+  const asset = assets.find((item) => item.assetId === Number(selectedAsset))
+  const mayAllocate = can(user?.role, "allocateAssets")
+  const mayApprove = can(user?.role, "approveTransfers")
+
+  async function submit(event: React.FormEvent) {
+    event.preventDefault()
+    if (!asset || !recipientId) {
+      toast.error("Choose an asset and recipient")
+      return
+    }
+    setSaving(true)
+    try {
+      if (asset.status === "Available" && mayAllocate) {
+        await allocateAsset({ assetId: asset.assetId, allocatedToUserId: Number(recipientId), expectedReturnDate: returnDate || undefined })
+        toast.success("Asset allocated")
+      } else {
+        await requestTransfer({ assetId: asset.assetId, requestedToUserId: Number(recipientId), reason: reason || undefined })
+        toast.success("Transfer request submitted")
+      }
+      setSelectedAsset("")
+      setRecipientId("")
+      setReturnDate("")
+      setReason("")
+      await load()
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : "Could not save request")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function resolveTransfer(transferId: number, approve: boolean) {
+    try {
+      await decideTransfer(transferId, approve)
+      toast.success(approve ? "Transfer approved" : "Transfer rejected")
+      await load()
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : "Could not update transfer")
+    }
+  }
+
+  const formTitle = asset?.status === "Available" && mayAllocate ? "Allocate asset" : "Request transfer"
 
   return (
-    <div className="flex flex-1 flex-col gap-8 p-4 md:p-6 lg:p-8 max-w-4xl w-full mx-auto">
-      
-      {/* Dev toggle (hidden from real users, just for us to test both states) */}
-      <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground -mb-4">
-        <Label htmlFor="dev-toggle" className="text-xs">Mock state: Asset is Allocated</Label>
-        <Switch id="dev-toggle" checked={isAssetAllocated} onCheckedChange={setIsAssetAllocated} />
-      </div>
+    <div className="flex flex-1 flex-col gap-8 p-4 md:p-6 lg:p-8 max-w-6xl w-full mx-auto">
+      <div><h2 className="text-2xl font-semibold">Allocation & transfers</h2><p className="text-sm text-muted-foreground">Requests and allocations are scoped to your role and department.</p></div>
+      {error && <p className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}
 
-      <div className="flex flex-col gap-6">
-        {/* Asset Selection */}
-        <div className="grid gap-2">
-          <Label className="text-foreground text-base">Asset</Label>
-          <div className="relative">
-            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input 
-              value={isAssetAllocated ? "AF-0114 - Dell laptop" : "AF-0201 - Office chair"}
-              readOnly
-              className="pl-9 bg-background border-border text-foreground h-11 text-base font-medium"
-            />
-          </div>
+      <form onSubmit={submit} className="grid gap-5 rounded-lg border p-5">
+        <h3 className="text-lg font-medium">{formTitle}</h3>
+        <div className="grid gap-5 md:grid-cols-2">
+          <div className="grid gap-2"><Label>Asset</Label><Select value={selectedAsset} onValueChange={setSelectedAsset}><SelectTrigger><SelectValue placeholder="Choose an available asset or allocated asset to transfer" /></SelectTrigger><SelectContent>{assets.map((item) => <SelectItem key={item.assetId} value={String(item.assetId)}>{item.assetTag} — {item.name} ({item.status})</SelectItem>)}</SelectContent></Select></div>
+          <div className="grid gap-2"><Label>Recipient</Label><Select value={recipientId} onValueChange={setRecipientId}><SelectTrigger><SelectValue placeholder="Choose employee" /></SelectTrigger><SelectContent>{employees.filter((item) => item.userId !== user?.userId).map((item) => <SelectItem key={item.userId} value={String(item.userId)}>{item.name}{item.department ? ` — ${item.department.name}` : ""}</SelectItem>)}</SelectContent></Select></div>
         </div>
+        {asset?.status === "Available" && mayAllocate ? <div className="grid max-w-sm gap-2"><Label htmlFor="return-date">Expected return date (optional)</Label><Input id="return-date" type="date" value={returnDate} onChange={(event) => setReturnDate(event.target.value)} /></div> : <div className="grid gap-2"><Label htmlFor="transfer-reason">Reason</Label><Textarea id="transfer-reason" value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Why is this transfer needed?" /></div>}
+        <div><Button type="submit" disabled={saving || loading}>{saving ? "Saving…" : formTitle}</Button></div>
+      </form>
 
-        {/* Double-Allocation Conflict Block */}
-        {isAssetAllocated && (
-          <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 mt-2">
-            <div className="flex items-start gap-3">
-              <AlertCircleIcon className="h-5 w-5 text-destructive mt-0.5" />
-              <div>
-                <h4 className="text-base font-medium text-destructive">
-                  Already Allocated to Priya shah (Engineering)
-                </h4>
-                <p className="text-sm text-destructive/80 mt-1">
-                  Direct re-allocation is blocked - submit a transfer request below.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
+      <section className="space-y-3"><div><h3 className="text-lg font-medium">Current allocations</h3><p className="text-sm text-muted-foreground">{user?.role === "Employee" ? "Assets allocated to you" : user?.role === "DepartmentHead" ? "Assets allocated within your department" : "Organization allocations"}</p></div>
+        <div className="overflow-hidden rounded-md border"><Table><TableHeader className="bg-muted"><TableRow><TableHead>Asset</TableHead><TableHead>Allocated to</TableHead><TableHead>Allocated on</TableHead><TableHead>Return due</TableHead><TableHead>Status</TableHead></TableRow></TableHeader><TableBody>{loading ? <TableRow><TableCell colSpan={5} className="h-20 text-center text-muted-foreground">Loading…</TableCell></TableRow> : allocations.length === 0 ? <TableRow><TableCell colSpan={5} className="h-20 text-center text-muted-foreground">No allocations found.</TableCell></TableRow> : allocations.map((item) => <TableRow key={item.allocationId}><TableCell className="font-medium">{item.asset.assetTag} — {item.asset.name}</TableCell><TableCell>{recipient(item)}</TableCell><TableCell>{formatDate(item.allocationDate)}</TableCell><TableCell>{formatDate(item.expectedReturnDate)}</TableCell><TableCell><Badge variant="outline">{item.status}</Badge></TableCell></TableRow>)}</TableBody></Table></div>
+      </section>
 
-        {/* Action Form (Transfer or Direct Allocate) */}
-        <div className="mt-4">
-          <h3 className="text-lg font-medium text-foreground mb-4">
-            {isAssetAllocated ? "Transfer Request" : "Direct Allocation"}
-          </h3>
-          
-          <div className="grid gap-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* From Field */}
-              <div className="grid gap-2">
-                <Label className="text-foreground">From</Label>
-                <Input 
-                  value={isAssetAllocated ? "Priya Shah" : "Warehouse (Available)"} 
-                  disabled 
-                  className="bg-muted text-muted-foreground border-transparent h-10"
-                />
-              </div>
-
-              {/* To Field */}
-              <div className="grid gap-2">
-                <Label className="text-foreground">To <span className="text-destructive">*</span></Label>
-                <Select>
-                  <SelectTrigger className="bg-background border-border text-foreground h-10">
-                    <SelectValue placeholder="Select Employee...." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="raj">Raj Patel (Design)</SelectItem>
-                    <SelectItem value="aditi">Aditi Rao (Engineering)</SelectItem>
-                    <SelectItem value="rohan">Rohan Mehta (Facilities)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Conditional Fields based on state */}
-            {isAssetAllocated ? (
-              <div className="grid gap-2">
-                <Label className="text-foreground">Reason</Label>
-                <Textarea 
-                  placeholder="Why is this transfer needed? (e.g., Priya is moving to a new team)"
-                  className="min-h-30 bg-background border-border text-foreground resize-none"
-                />
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="grid gap-2">
-                  <Label className="text-foreground">Expected Return Date (Optional)</Label>
-                  <Popover>
-                    <PopoverTrigger>
-                      <Button
-                        variant={"outline"}
-                        className={`justify-start text-left font-normal bg-background text-foreground border-border h-10 ${!date && "text-muted-foreground"}`}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {date ? format(date, "PPP") : <span>Pick a date</span>}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 bg-background border-border" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={date}
-                        onSelect={setDate}
-                        autoFocus
-                        className="bg-background text-foreground"
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              </div>
-            )}
-
-            <div>
-              <Button className={
-                isAssetAllocated 
-                  ? "bg-[#007a5a] hover:bg-[#007a5a]/90 text-white rounded-md px-6 shadow-none font-medium h-10" // Using the green from mockup for Submit Request
-                  : "bg-primary hover:bg-primary/90 text-primary-foreground rounded-md px-6 shadow-none font-medium h-10"
-              }>
-                {isAssetAllocated ? "Submit Request" : "Allocate Asset"}
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="my-2 border-t border-border"></div>
-
-      {/* Allocation History Log */}
-      <div>
-        <div className="flex items-center gap-2 mb-6">
-          <HistoryIcon className="h-5 w-5 text-foreground" />
-          <h3 className="text-lg font-medium text-foreground">Allocation history</h3>
-        </div>
-        
-        <div className="flex flex-col gap-6 pl-2">
-          {isAssetAllocated ? (
-            <>
-              <div className="relative pl-6 border-l-2 border-border pb-6">
-                <div className="absolute -left-[9px] top-0 h-4 w-4 rounded-full bg-background border-2 border-primary"></div>
-                <p className="text-sm text-foreground font-medium">Allocated to Priya shah - Engineering</p>
-                <p className="text-sm text-muted-foreground mt-1">Mar 12, 2026</p>
-              </div>
-              <div className="relative pl-6 border-l-2 border-transparent">
-                <div className="absolute -left-[9px] top-0 h-4 w-4 rounded-full bg-background border-2 border-muted-foreground"></div>
-                <p className="text-sm text-foreground">Returned by Arjun Nair - condition: good</p>
-                <p className="text-sm text-muted-foreground mt-1">Jan 04, 2026</p>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="relative pl-6 border-l-2 border-border pb-6">
-                <div className="absolute -left-[9px] top-0 h-4 w-4 rounded-full bg-background border-2 border-primary"></div>
-                <p className="text-sm text-foreground font-medium">Added to Inventory (Warehouse)</p>
-                <p className="text-sm text-muted-foreground mt-1">Apr 01, 2026</p>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-      
+      <section className="space-y-3"><div><h3 className="text-lg font-medium">Transfer requests</h3><p className="text-sm text-muted-foreground">Pending requests can be approved by the authorized role.</p></div>
+        <div className="overflow-hidden rounded-md border"><Table><TableHeader className="bg-muted"><TableRow><TableHead>Asset</TableHead><TableHead>From</TableHead><TableHead>To</TableHead><TableHead>Requested by</TableHead><TableHead>Status</TableHead><TableHead /></TableRow></TableHeader><TableBody>{loading ? <TableRow><TableCell colSpan={6} className="h-20 text-center text-muted-foreground">Loading…</TableCell></TableRow> : transfers.length === 0 ? <TableRow><TableCell colSpan={6} className="h-20 text-center text-muted-foreground">No transfer requests found.</TableCell></TableRow> : transfers.map((item) => <TableRow key={item.transferId}><TableCell className="font-medium">{item.asset.assetTag} — {item.asset.name}</TableCell><TableCell>{item.currentHolder?.name || "Unassigned"}</TableCell><TableCell>{item.requestedTo.name}</TableCell><TableCell>{item.requester.name}</TableCell><TableCell><Badge variant="outline">{item.status}</Badge></TableCell><TableCell>{item.status === "Requested" && mayApprove && <div className="flex gap-2"><Button size="sm" onClick={() => void resolveTransfer(item.transferId, true)}>Approve</Button><Button size="sm" variant="outline" onClick={() => void resolveTransfer(item.transferId, false)}>Reject</Button></div>}</TableCell></TableRow>)}</TableBody></Table></div>
+      </section>
     </div>
   )
 }

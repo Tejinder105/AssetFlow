@@ -16,9 +16,12 @@ import {
 
 const router = Router();
 
-router.use(authenticate, requireRole("Admin"));
+router.use(authenticate);
 
+// The employee directory is required when a user selects a transfer recipient.
+// Mutations remain an administrator-only organization setup capability.
 router.route("/").get(validate(validateEmployeeListQuery, "query"), listEmployeesController);
+router.use(requireRole("Admin"));
 router.route("/:id").put(validate(validateUpdateEmployee), updateEmployeeController);
 router.route("/:id/role").patch(validate(validatePromoteRole), promoteRoleController);
 router.route("/:id/status").patch(deactivateEmployeeController);

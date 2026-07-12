@@ -14,10 +14,10 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import { useCurrentUser } from "@/features/auth/hooks"
+import { can } from "@/lib/permissions"
 import { LayoutDashboardIcon, SettingsIcon, PackageIcon, ArrowRightLeftIcon, CalendarClockIcon, WrenchIcon, ClipboardCheckIcon, FileTextIcon, BellIcon } from "lucide-react"
 
-const data = {
-  navMain: [
+const navMain = [
     {
       title: "Dashboard",
       url: "/dashboard",
@@ -32,6 +32,7 @@ const data = {
       icon: (
         <SettingsIcon />
       ),
+      action: "manageOrganization",
     },
     {
       title: "Assets",
@@ -67,6 +68,7 @@ const data = {
       icon: (
         <ClipboardCheckIcon />
       ),
+      action: "manageAudits",
     },
     {
       title: "Reports",
@@ -74,6 +76,7 @@ const data = {
       icon: (
         <FileTextIcon />
       ),
+      action: "viewAnalytics",
     },
     {
       title: "Notifications",
@@ -82,11 +85,12 @@ const data = {
         <BellIcon />
       ),
     },
-  ],
-  
-}
+] as const
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const user = useCurrentUser()
+  const visibleNavigation = navMain.filter(
+    (item) => !('action' in item) || can(user?.role, item.action)
+  )
 
   return (
     <Sidebar collapsible="offcanvas" {...props}>
@@ -103,7 +107,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={visibleNavigation} showQuickCreate={can(user?.role, "registerAssets")} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={user ? { name: user.name, email: user.email } : { name: "", email: "" }} />
