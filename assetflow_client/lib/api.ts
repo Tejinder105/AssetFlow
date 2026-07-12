@@ -108,3 +108,31 @@ export async function apiRequest<TBody, TResponse>({
 
   return responseSchema.parse(json)
 }
+
+
+type AuthApiOptions<TBody, TResponse> = Omit<
+  ApiRequestOptions<TBody, TResponse>,
+  "token"
+>
+
+export async function authenticatedApiRequest<TBody, TResponse>(
+  opts: AuthApiOptions<TBody, TResponse>
+): Promise<TResponse> {
+  // Dynamic import avoids circular dependency — store imports api, api imports store
+  const { useAuthStore } = await import("@/store/auth")
+  const state = useAuthStore.getState()
+
+  try {
+    return await apiRequest({ ...opts, token: state.accessToken })
+  } catch (error) {
+    if (error instanceof ApiRequestError && error.status === 401) {
+      // Try refreshing the token
+      const newToken = await state.refreshAccessToken()
+      if (newToken) {
+        return await apiRequest({ ...opts, token: newToken })
+      }
+    }
+    throw error
+  }
+}
+
