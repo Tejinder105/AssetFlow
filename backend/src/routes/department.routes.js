@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { authenticate as verifyJWT } from "../middleware/authenticate.middleware.js";
+import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { requireRole } from "../middleware/role.middleware.js";
 import { validate } from "../middleware/validate.middleware.js";
 import {
@@ -17,7 +17,7 @@ import {
 
 const router = Router();
 
-router.use(verifyJWT, requireRole("Admin"));
+router.use(authenticate, requireRole("Admin"));
 
 router
     .route("/")
@@ -30,3 +30,4 @@ router
     .patch(validate(validateDepartmentStatusPatch), patchDepartmentStatusController);
 
 export default router;
+

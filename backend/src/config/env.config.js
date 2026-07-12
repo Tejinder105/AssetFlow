@@ -4,21 +4,17 @@
  */
 
 const env = {
-    // ── Node ───────────────────────────────────────────
     NODE_ENV: process.env.NODE_ENV || "development",
     PORT: parseInt(process.env.PORT || "8000", 10),
 
-    // ── CORS ───────────────────────────────────────────
-    CORS_ORIGIN: process.env.CORS_ORIGIN || "*",
+    CORS_ORIGIN: process.env.CORS_ORIGIN || "http://localhost:3000",
 
-    // ── JWT ────────────────────────────────────────────
     JWT_ACCESS_SECRET: process.env.ACCESS_TOKEN_SECRET,
     JWT_REFRESH_SECRET: process.env.REFRESH_TOKEN_SECRET,
-    ACCESS_TOKEN_EXPIRY: "15m",    // 15 minutes
-    REFRESH_TOKEN_EXPIRY: "7d",    // 7 days
-    REFRESH_TOKEN_EXPIRY_MS: 7 * 24 * 60 * 60 * 1000, // 7 days in ms
+    ACCESS_TOKEN_EXPIRY: "15m",
+    REFRESH_TOKEN_EXPIRY: "7d",
+    REFRESH_TOKEN_EXPIRY_MS: 7 * 24 * 60 * 60 * 1000,
 
-    // ── Helpers ────────────────────────────────────────
     get isProduction() {
         return this.NODE_ENV === "production";
     },

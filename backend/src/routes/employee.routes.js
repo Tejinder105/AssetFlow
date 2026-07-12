@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { authenticate as verifyJWT } from "../middleware/authenticate.middleware.js";
+import { authenticate } from "../middleware/authenticate.middleware.js";
 import { requireRole } from "../middleware/role.middleware.js";
 import { validate } from "../middleware/validate.middleware.js";
 import {
@@ -16,7 +16,7 @@ import {
 
 const router = Router();
 
-router.use(verifyJWT, requireRole("Admin"));
+router.use(authenticate, requireRole("Admin"));
 
 router.route("/").get(validate(validateEmployeeListQuery, "query"), listEmployeesController);
 router.route("/:id").put(validate(validateUpdateEmployee), updateEmployeeController);
@@ -24,3 +24,4 @@ router.route("/:id/role").patch(validate(validatePromoteRole), promoteRoleContro
 router.route("/:id/status").patch(deactivateEmployeeController);
 
 export default router;
+
