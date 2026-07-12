@@ -21,10 +21,14 @@ app.use(cookieParser());
 // Routes import
 import userRouter from "./routes/user.routes.js";
 import departmentRouter from "./routes/department.routes.js";
+import categoryRouter from "./routes/category.routes.js";
+import employeeRouter from "./routes/employee.routes.js";
 
 // Routes declaration
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/departments", departmentRouter);
+app.use("/api/v1/categories", categoryRouter);
+app.use("/api/v1/employees", employeeRouter);
 
 app.use(errorHandler);
 
