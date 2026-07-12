@@ -32,7 +32,7 @@ export default function AllocationPage() {
     <div className="flex flex-1 flex-col gap-8 p-4 md:p-6 lg:p-8 max-w-4xl w-full mx-auto">
       
       {/* Dev toggle (hidden from real users, just for us to test both states) */}
-      <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground mb-[-1rem]">
+      <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground -mb-4">
         <Label htmlFor="dev-toggle" className="text-xs">Mock state: Asset is Allocated</Label>
         <Switch id="dev-toggle" checked={isAssetAllocated} onCheckedChange={setIsAssetAllocated} />
       </div>
@@ -108,7 +108,7 @@ export default function AllocationPage() {
                 <Label className="text-foreground">Reason</Label>
                 <Textarea 
                   placeholder="Why is this transfer needed? (e.g., Priya is moving to a new team)"
-                  className="min-h-[120px] bg-background border-border text-foreground resize-none"
+                  className="min-h-30 bg-background border-border text-foreground resize-none"
                 />
               </div>
             ) : (
