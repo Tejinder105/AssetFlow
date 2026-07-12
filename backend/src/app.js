@@ -24,12 +24,6 @@ app.use(express.urlencoded({ extended: true, limit: "16kb" }));
 app.use(express.static("public"));
 app.use(cookieParser());
 
-app.get("/health", (_req, res) => {
-    res.status(200).json({ success: true, message: "AssetFlow API is running" });
-});
-
-app.use("/api", apiRouter);
-
 // ── API Routes (central router) ────────────────────────────────
 app.use("/api", apiRouter);
 

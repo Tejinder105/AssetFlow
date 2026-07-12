@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { verifyJWT } from "../middlewares/auth.middleware.js";
+import { authenticate } from "../middleware/authenticate.middleware.js";
 import { requireRole } from "../middleware/role.middleware.js";
 import { validate } from "../middleware/validate.middleware.js";
 import {
